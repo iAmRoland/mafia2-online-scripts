@@ -1,6 +1,3 @@
-# mafia2-online-scripts
-Just some simple scripts for usage in Mafia 2 Online (mafia2-online.com).
-
 # [Mafia2-Online](http://mafia2-online.com/) Scripts
 This repo will contain all sorts of scripts I have created for usage on [Mafia2-Online](http://mafia2-online.com/).
 
