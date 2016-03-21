@@ -1,0 +1,12 @@
+<meta>
+	<!-- Server side scripts -->
+	<script type="server">brix.nut</script>
+	
+	<!-- Client side scripts -->
+	<script type="client">fps.nut</script>
+	<script type="client">nametags.nut</script>
+	<script type="client">scoreboard.nut</script>
+	<script type="client">gui.nut</script>
+	
+	<file>logo.png</file>
+</meta>
