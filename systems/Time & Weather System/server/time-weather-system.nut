@@ -6,19 +6,17 @@
 GLOBAL_HOURS <- 12;
 GLOBAL_MINUTES <- 0;
 GLOBAL_SECONDS <- 0;
-// This will hold a formated version of time
-// which will be sent to client with triggerClientEvent
+// This will hold a formatted version of time, which we send to client with triggerClientEvent
 GLOBAL_TIME <- "12:00";
  
 // Set the in-game time speed
 SERVER_TIME_SPEED <- 500;
-// Set if it's summer of winter on server
+// Set if it's summer or winter on server
 SERVER_IS_SUMMER <- true;
 // Holds our current weather
 SERVER_WEATHER <- "DT_RTRclear_day_noon";
 
-// With this we check when its time to change the weather,
-// pretty much random but at the same time fits the hour
+// This we use to check when to change weather again
 WEATHER_CHANGE_TRIGGER <- 10;
  
  
@@ -27,11 +25,8 @@ WEATHER_CHANGE_TRIGGER <- 10;
  * Layout:
  *      [HOUR_START, HOUR_END, ["LIST", "OF", "WEATHERS", ...] ]
  *
- * So if time is between HOUR_START and HOUR_END, then it will pick one of the
- * weathers that exist in the same slot.
- * You can recheck and reorder the weathers, if you have atleast one weather in
- * a slot then it should not break, since the code checks how many weathers the
- * slot contains.
+ * So if time is between HOUR_START and HOUR_END, 
+ * then it will pick one of the weathers that are available in slot [2].
  */
 WEATHERS <- {
     SUMMER = [
@@ -67,17 +62,18 @@ WEATHERS <- {
 };
  
  
-// This will hold the weather that the player has
+// We use this to make sure all players have same weather
+// In case it bugs or alike and is unsycned
 playerWeather <- array(MAX_PLAYERS, 0);
 
- 
+
 function scriptInit() {
     log("Script initialized!");
     
     // Set summer state
     setSummer(SERVER_IS_SUMMER);
 
-    // Create timer to call function Time with duration of 1 second indefinitely
+    // Create timer to call function Time with duration from SERVER_TIME_SPEED
     timer(Time, SERVER_TIME_SPEED, -1);
 }
 addEventHandler("onScriptInit", scriptInit);
@@ -85,7 +81,7 @@ addEventHandler("onScriptInit", scriptInit);
  
  
 function playerConnect(playerid, name, ip, serial) {
-    // Just set it to an empty string
+    // Just set it to an empty string for now
     playerWeather[playerid] = "";
 }
 addEventHandler("onPlayerConnect", playerConnect);
@@ -100,26 +96,23 @@ function random (min = 0, max = RAND_MAX) {
  
 // Our timer function, called from scriptInit
 function Time() {
-    // This decreases slowly until it reaches 0
+    // Decreases slowly
     WEATHER_CHANGE_TRIGGER--;
  
     // Increment seconds
     GLOBAL_SECONDS++;
  
-    // When seconds go above 60,
-    // increment minutes and reset seconds
+    // When seconds go above 60, increment minutes and reset seconds
     if(GLOBAL_SECONDS >= 60){
         GLOBAL_MINUTES++;
         GLOBAL_SECONDS = 0;
     }
-    // Same for minutes but increment hours
-    // and reset minutes
+    // Same for minutes but increment hours, and reset minutes
     if (GLOBAL_MINUTES >= 60) {
         GLOBAL_HOURS++;
         GLOBAL_MINUTES = 0;
     }
-    // Almost the same for hours but
-    // resets both hours and minutes
+    // Almost the same for hours but, resets both hours and minutes
     if (GLOBAL_HOURS >= 24) {
         GLOBAL_HOURS = 0;
         GLOBAL_MINUTES = 0;
@@ -133,26 +126,28 @@ function Time() {
 
     // First we check if weather count has reached 0
     if (WEATHER_CHANGE_TRIGGER <= 0) {
+        // Get weather based on what season it is
         local weathers = (SERVER_IS_SUMMER) ? WEATHERS.SUMMER : WEATHERS.WINTER;
  
-        // Go through the WEATHERS array
+        // Go through the weathers array
         for (local i = 0; i < weathers.len(); i++) {
             // Check and compare current hour with the hours in array
             // So it checks if current hour is between HOUR_START and HOUR_END
             if (GLOBAL_HOURS >= weathers[i][0] && GLOBAL_HOURS <= weathers[i][1]) {
-                // Select a random weather between start slot 2 and last slot
+                // Select a random weather from slot [2]
                 local randWeather = weathers[i][2][random(0, weathers[i][2].len()-1)];
                 // Set the random weather for all players
-                setWeather( randWeather );
+                setWeather(randWeather);
                 // Change SERVER_WEATHER string
                 SERVER_WEATHER = randWeather;
-                // Loop through players and set their weather as well
+                
+                // Loop through players and set their playerWeather variable
                 for (local p = 0; p < MAX_PLAYERS; p++) {
                     if (isPlayerConnected(p)) {
                         playerWeather[p] = SERVER_WEATHER;
                     }
                 }
-                // Generate a new random number when to change weather
+                // Generate a new number when weather change will happen again
                 // New count is between 20 and 60 in-game minutes.
                 WEATHER_CHANGE_TRIGGER = random(20*60, 60*60);
 
@@ -170,16 +165,14 @@ function Time() {
         if (isPlayerConnected(i)) {
             // First check if player does not have the current weather
             if (playerWeather[i] != SERVER_WEATHER) {
-                // Set weather in player variable
+                // Set weather in playerWeather variable
                 playerWeather[i] = SERVER_WEATHER;
 
                 // Set weather server wide again
                 setWeather(SERVER_WEATHER);
             }
  
-            // Then we trigger to set time on client side
-            // We pass in the playerid, what event to call and what to
-            // send to that event
+            // Trigger the client event and send our GLOBAL_TIME there to display
             triggerClientEvent(i, "setTime", GLOBAL_TIME);  
         }
     }
