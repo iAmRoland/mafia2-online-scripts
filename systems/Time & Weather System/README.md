@@ -6,4 +6,4 @@ If you have found bugs or see ways to improve this then do let me know.
 You can find me here or on [Mafia 2 Online forums](http://forum.mafia2-online.com) with username Rolandd.
 
 ## License
-You are allowed to use this script however you want. Credits is appreciated but not required.
+This is licensed under MIT License. You are allowed to use this script however you want.
